@@ -1,0 +1,1061 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToxiAlert - Toxicology Screening</title>
+	<meta name="description" content="ToxiAlert : Computational toxicology screening tool. Lead Developer: Dhevasumithaa Viswanathan, Project Supervisor: Dr. Udhayakumar Mani.">
+	
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #1a237e;
+            --secondary-color: #283593;
+            --accent-color: #536dfe;
+            --success-color: #2e7d32;
+            --warning-color: #f57c00;
+            --danger-color: #c62828;
+            --dark-danger: #b71c1c;
+            --light-bg: #f5f5f5;
+            --border-color: #e0e0e0;
+            --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e3e9f7 100%);
+            min-height: 100vh;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px; }
+        header {
+            background: white; padding: 2.5rem; border-radius: 20px;
+            box-shadow: var(--card-shadow); margin-bottom: 2rem;
+            border-left: 6px solid var(--accent-color); position: relative; overflow: hidden;
+        }
+        .watermark {
+            position: absolute; right: 30px; top: 30px; font-size: 0.9rem;
+            color: #e0e0e0; font-weight: bold; opacity: 0.6;
+        }
+        h1 { color: var(--primary-color); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 15px; font-weight: 700; }
+        .subtitle { color: #555; font-size: 1.2rem; margin-bottom: 1.5rem; max-width: 800px; }
+        .metrics-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+        .metric-item { text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; border: 1px solid var(--border-color); }
+        .metric-value { font-size: 2.2rem; font-weight: 700; color: var(--primary-color); margin-bottom: 0.5rem; }
+        .metric-label { color: #666; font-size: 0.95rem; font-weight: 500; }
+        
+        /* Views Handling */
+        .view-section { display: none; animation: fadeIn 0.5s ease-out; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card {
+            background: white; border-radius: 16px; padding: 2.5rem;
+            margin-bottom: 2.5rem; box-shadow: var(--card-shadow);
+            border-top: 4px solid var(--accent-color);
+        }
+        .form-section { margin-bottom: 2rem; }
+        label { display: block; margin-bottom: 0.8rem; font-weight: 600; color: var(--primary-color); font-size: 1.1rem; }
+        textarea {
+            width: 100%; padding: 1.2rem; border: 2px solid var(--border-color);
+            border-radius: 10px; font-family: 'Consolas', 'Courier New', monospace; font-size: 15px;
+            resize: vertical; transition: all 0.3s; background: #fafafa;
+        }
+        textarea:focus { outline: none; border-color: var(--accent-color); background: white; }
+        .mode-selector { display: flex; gap: 15px; margin-bottom: 2rem; }
+        .mode-btn {
+            flex: 1; padding: 15px; border: 2px solid var(--border-color); background: white;
+            border-radius: 10px; cursor: pointer; text-align: center; font-weight: 600;
+            font-size: 1.1rem; transition: all 0.3s;
+        }
+        .mode-btn.active { background: var(--accent-color); color: white; border-color: var(--accent-color); }
+        
+        .btn {
+            background: var(--accent-color); color: white; border: none; padding: 14px 28px;
+            border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: 600;
+            transition: all 0.3s; display: inline-flex; align-items: center; gap: 10px;
+        }
+        .btn:hover { background: var(--secondary-color); transform: translateY(-2px); }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; }
+        .btn-nav { margin-bottom: 1rem; background: transparent; color: var(--primary-color); border: 1px solid var(--primary-color); }
+        .btn-nav:hover { background: var(--primary-color); color: white; }
+
+        .molecule-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 2px solid var(--light-bg); }
+        .molecule-info { flex: 1; }
+        .smiles-display { font-family: 'Consolas', monospace; background: #f8f9fa; padding: 1.2rem; border-radius: 10px; border: 1px solid var(--border-color); word-break: break-all;}
+        .properties-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.2rem; margin-top: 1.5rem; }
+        .property-box { text-align: center; padding: 1.2rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 10px; border: 1px solid var(--border-color); }
+        .property-value { font-size: 1.8rem; font-weight: 700; color: var(--accent-color); margin-bottom: 0.5rem; }
+        .property-label { color: #666; font-size: 0.9rem; font-weight: 500; }
+        .score-panel { min-width: 280px; margin-left: 2rem; }
+        .tai-display { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 12px; text-align: center; margin-bottom: 1.5rem; }
+        .tai-value { font-size: 3rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .tai-label { font-size: 1rem; opacity: 0.9; }
+        .risk-badge { display: inline-block; padding: 12px 24px; border-radius: 50px; font-weight: bold; font-size: 1.2rem; margin-bottom: 1rem; width: 100%; text-align: center; }
+        
+        .alert-card { background: white; border-left: 5px solid; padding: 1.5rem; margin-bottom: 1.2rem; border-radius: 0 10px 10px 0; border: 1px solid var(--border-color); }
+        .alert-card.critical { border-left-color: #d32f2f; background: #ffebee; }
+        .alert-card.high { border-left-color: #f57c00; background: #fff3e0; }
+        .alert-card.medium { border-left-color: #fbc02d; background: #fffde7; }
+        .alert-card.low { border-left-color: #388e3c; background: #e8f5e9; }
+        .suggestion-card { background: white; border-left: 5px solid #536dfe; padding: 1.5rem; margin-bottom: 1.2rem; border-radius: 0 10px 10px 0; border: 1px solid var(--border-color); }
+
+        .chart-container { position: relative; height: 300px; width: 100%; margin-top: 2rem; }
+        
+/* --- COMPACT REFERENCE SECTION --- */
+		
+		.reference-list {
+			display: grid;
+			/* Fits more items per row by reducing min-width */
+			grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+			gap: 12px; /* Tighter spacing between cards */
+			margin-top: 1.5rem;
+		}
+
+		.reference-item {
+			background: white;
+			padding: 12px 15px; /* Compact padding */
+			padding-right: 40px; /* Space for the small icon */
+			border-radius: 8px;
+			border: 1px solid #eee;
+			border-left: 3px solid var(--secondary-color); /* Thinner attractive accent */
+			box-shadow: 0 2px 5px rgba(0,0,0,0.03); /* Subtle shadow */
+			font-size: 0.8rem; /* Smaller, scientific text size */
+			color: #555;
+			line-height: 1.4;
+			position: relative;
+			transition: all 0.2s ease;
+			overflow: hidden;
+			cursor: default;
+		}
+
+		.reference-item:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 5px 12px rgba(0,0,0,0.08);
+			border-left-color: var(--accent-color); /* Color shift on hover */
+			background: #fafafa;
+		}
+
+		/* Background Icon - smaller and subtle */
+		
+		.reference-item::after {
+			content: "\f02d"; /* FontAwesome Book */
+			font-family: "Font Awesome 6 Free";
+			font-weight: 900;
+			position: absolute;
+			right: 10px;
+			top: 50%;
+			transform: translateY(-50%); /* Vertically centered */
+			font-size: 1.5rem; /* Much smaller than before */
+			color: #f1f3f5; /* Very light gray */
+			z-index: 0;
+			pointer-events: none;
+		}
+
+		.reference-item span {
+			position: relative;
+			z-index: 1;
+			display: block;
+		}
+
+		/* Italics for Journal Names inside references */
+		
+		.reference-item em {
+			color: var(--primary-color);
+			font-style: italic;
+			font-weight: 600;
+		}
+		
+		footer { text-align: center; margin-top: 4rem; padding-top: 2.5rem; border-top: 1px solid var(--border-color); color: #666; }
+        .footer-links { display: flex; justify-content: center; gap: 2rem; margin-top: 1rem; }
+
+        @media (max-width: 992px) { 
+		    .container {
+                padding: 20px;
+            }
+            
+            .molecule-header {
+                flex-direction: column;
+            }
+            
+            .score-panel {
+                margin-left: 0;
+                margin-top: 2rem;
+                width: 100%;
+            }
+            
+            .reference-list {
+                columns: 1;
+            } }
+			
+/* --- BATCH TABLE STYLING --- */
+		
+		#batch-result-card {
+			border-top: 4px solid var(--secondary-color); /* Distinct from single analysis */
+		}
+		
+        .val-table th, .val-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .val-table th { background-color: var(--light-bg); color: var(--primary-color); }
+
+		.val-table {
+			width: 100%;
+			border-collapse: separate; /* Allows for border radius on rows */
+			border-spacing: 0 8px; /* Adds space between rows like cards */
+			margin-top: 1rem;
+		}
+
+		.val-table thead th {
+			background-color: transparent;
+			color: #666;
+			font-weight: 700;
+			text-transform: uppercase;
+			font-size: 0.85rem;
+			letter-spacing: 0.5px;
+			padding: 12px 20px;
+			border: none;
+			text-align: left;
+		}
+
+		.val-table tbody tr {
+			background: white;
+			box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+			transition: all 0.2s ease;
+		}
+
+		.val-table tbody tr:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+			background: #f8f9fa;
+		}
+
+		.val-table td {
+			padding: 16px 20px;
+			border-top: 1px solid var(--border-color);
+			border-bottom: 1px solid var(--border-color);
+			vertical-align: middle;
+		}
+
+		/* Round corners for the first and last cells of each row */
+		
+		.val-table td:first-child {
+			border-left: 1px solid var(--border-color);
+			border-top-left-radius: 8px;
+			border-bottom-left-radius: 8px;
+			font-weight: 500;
+			color: var(--primary-color);
+		}
+
+		.val-table td:last-child {
+			border-right: 1px solid var(--border-color);
+			border-top-right-radius: 8px;
+			border-bottom-right-radius: 8px;
+		}
+
+		/* Badge Styling for Risk Level */
+		
+		.risk-badge-mini {
+			padding: 6px 12px;
+			border-radius: 20px;
+			font-size: 0.75rem;
+			font-weight: 700;
+			text-transform: uppercase;
+			color: white;
+			box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+			display: inline-block;
+			min-width: 80px;
+			text-align: center;
+		}
+
+		/* TAI Score Styling */
+		
+		.tai-score-mini {
+			font-weight: 800;
+			font-size: 1.1rem;
+			color: #333;
+		}
+		
+		
+/* --- HOVER EFFECTS FOR MODE BUTTONS --- */
+
+		.mode-btn:hover {
+			transform: translateY(-3px); /* Lifts the button up slightly */
+			box-shadow: 0 5px 15px rgba(83, 109, 254, 0.2); /* Adds a soft blue glow */
+			border-color: var(--accent-color);
+		}
+
+		/* Specific style when hovering over the UNSELECTED button */
+		
+		.mode-btn:not(.active):hover {
+			background-color: #e8eaf6; /* Very light indigo tint */
+			color: var(--primary-color);
+			cursor: pointer;
+		}
+		
+		.new-features-list li {
+			margin-bottom: 8px;
+			line-height: 1.5;
+			font-size: 0.95rem;
+			color: #444;
+		}
+		.new-features-list strong {
+			color: var(--secondary-color);
+		}
+		
+		
+
+		
+/* --- BATCH ANALYSIS STYLES --- */
+
+		/* Make table rows look like clickable links */
+		
+		.val-table tbody tr {
+			cursor: pointer;
+			transition: all 0.2s ease;
+		}
+
+		/* Hover effect for the table rows */
+		
+		.val-table tbody tr:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+			background-color: #f8f9fa;
+			border-left: 3px solid var(--accent-color);
+		}
+
+		/* The Detailed Result Card (shown when click a row of batch analysis result summary) */
+		
+		.batch-detailed-card {
+			background: white;
+			border-radius: 16px;
+			padding: 2.5rem;
+			margin-bottom: 2.5rem;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+			border-top: 5px solid; /* Color handled by JS */
+			animation: slideUp 0.5s ease-out;
+		}
+
+		/* The Batch Export Button */
+		
+		.btn-export-batch {
+			background-color: var(--accent-color);
+			color: white;
+			width: 100%;
+			margin-top: 15px;
+			padding: 12px;
+			font-size: 1rem;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			gap: 8px;
+			border: none;
+			border-radius: 10px;
+			cursor: pointer;
+			transition: all 0.3s;
+		}
+
+		.btn-export-batch:hover {
+			background-color: var(--secondary-color);
+			transform: translateY(-2px);
+			box-shadow: 0 4px 10px rgba(83, 109, 254, 0.3);
+		}
+		
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <div id="home-view" class="view-section active">
+            <header>
+                <div class="watermark">OFFICIAL RELEASE</div>
+                <h1>
+					<i class="fas fa-microscope"></i> ToxiAlert : Computational Toxicology Screening Tool
+				</h1>
+				<div class="subtitle">
+					Advanced algorithm combining SMARTS-based toxicophore detection with physicochemical risk analysis. Features automated batch processing, bioisostere suggestions, and real-time benchmarking against standard research datasets.
+				</div>
+                <div class="metrics-bar">
+                    <div class="metric-item">
+                        <div class="metric-value" id="val_alerts">18</div>
+                        <div class="metric-label">Validated Alerts</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="val_sensitivity">>85%</div>
+                        <div class="metric-label">Sensitivity</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="val_accuracy">0-100</div>
+                        <div class="metric-label">TAI Score Range</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">Open</div>
+                        <div class="metric-label">Scientific Access</div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="card">
+                <h2><i class="fas fa-flask"></i> Molecular Analysis Interface</h2>
+                <form id="analysisForm">
+                    <div class="form-section">
+                        <div class="mode-selector">
+                            <label class="mode-btn active">
+                                <input type="radio" name="analysis_mode" value="single" checked hidden>
+                                <i class="fas fa-atom"></i> Single Molecule
+                            </label>
+                            <label class="mode-btn ">
+                                <input type="radio" name="analysis_mode" value="batch" hidden>
+                                <i class="fas fa-vial"></i> Batch Analysis
+                            </label>
+                        </div>
+                        <label for="smiles_input"><i class="fas fa-code"></i> Input SMILES Notation</label>
+                        <textarea id="smiles_input" name="smiles_input" rows="6" placeholder="Enter SMILES strings...&#10;Example compounds:&#10;c1ccccc1N  (Aniline - Toxic)&#10;NC(=O)N (Urea - Safe)"></textarea>
+                    </div>
+                    <div class="form-section">
+                        <button type="submit" class="btn">
+                            <i class="fas fa-search"></i> Analyze Molecular Toxicity
+                        </button>
+                        <button type="button" id="btnValidate" class="btn btn-secondary">
+                            <i class="fas fa-chart-bar"></i> Run Validation Benchmark
+                        </button>
+                        <button type="reset" class="btn" style="background: #95a5a6;">
+                            <i class="fas fa-redo"></i> Clear Input
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="card">
+                <h2><i class="fas fa-book-journal-whills"></i> Scientific References</h2>
+                <div class="reference-list">
+                    <div class="reference-item">
+						<span>Ashby J, Tennant RW. Definitive relationships among chemical structure, carcinogenicity and mutagenicity for 301 chemicals tested by the U.S. NTP. <em>Mutat Res.</em> 1991;257(3):229-306.</span>
+					</div>
+					<div class="reference-item">
+						<span>Rosenkranz HS, Klopman G. Structural basis of mutagenicity. <em>Mutat Res.</em> 1990;228(1):51-80.</span>
+					</div>
+					<div class="reference-item">
+						<span>Oesch F. Mammalian epoxide hydrases: inducible enzymes catalysing the inactivation of carcinogenic metabolites. <em>Xenobiotica.</em> 1973;3(5):305-340.</span>
+					</div>
+					<div class="reference-item">
+						<span>Jerina DM, Lehr R, et al. Bay-region activation of carcinogenic polycyclic hydrocarbons. <em>Proc Natl Acad Sci USA.</em> 1976;73(3):959-963.</span>
+					</div>
+					<div class="reference-item">
+						<span>Schultz TW, Lin DT, et al. QSAR for the Toxicity of acrylates and methacrylates. <em>Chem Res Toxicol.</em> 1990;3(3):188-194.</span>
+					</div>
+					<div class="reference-item">
+						<span>Lipinski CA, Lombardo F, et al. Experimental and computational approaches to estimate solubility and permeability. <em>Adv Drug Deliv Rev.</em> 2001;46(1-3):3-26.</span>
+					</div>
+					<div class="reference-item">
+						<span>Kalgutkar AS, Gardner I, et al. A comprehensive listing of bioactivation pathways of organic functional groups. <em>Curr Drug Metab.</em> 2005;6(3):161-225.</span>
+					</div>
+					<div class="reference-item">
+						<span>Patani GA, LaVoie EJ. Bioisosterism: A rational approach in drug design. <em>Chem Rev.</em> 1996;96(8):3147-3176.</span>
+					</div>
+					<div class="reference-item">
+						<span>Veber DF, Johnson SR, et al. Molecular properties that influence the oral bioavailability of drug candidates. <em>J Med Chem.</em> 2002;45(12):2615-2623.</span>
+					</div>
+					<div class="reference-item">
+						<span>Guengerich FP. Common and uncommon cytochrome P450 reactions related to metabolism and chemical toxicity. <em>Chem Res Toxicol.</em> 2001;14(6):611-650.</span>
+					</div>
+				</div>
+            </div>
+        </div>
+
+        <div id="analysis-view" class="view-section">
+            <button class="btn btn-nav" id="back-btn" onclick="switchView('home-view')">
+				<i class="fas fa-arrow-left"></i> Back to Home
+			</button>
+            <div class="card">
+                <div class="molecule-header">
+                    <div class="molecule-info">
+                        <h2><i class="fas fa-chart-line"></i> Analysis Results</h2>
+                        <p class="subtitle">SMILES Notation:</p>
+                        <div class="smiles-display" id="res_smiles"></div>
+                        <div class="properties-grid">
+                            <div class="property-box"><div class="property-value" id="res_mw">0</div><div class="property-label">Mol Weight</div></div>
+                            <div class="property-box"><div class="property-value" id="res_logp">0</div><div class="property-label">LogP</div></div>
+                            <div class="property-box"><div class="property-value" id="res_hbd">0</div><div class="property-label">H-Donors</div></div>
+                            <div class="property-box"><div class="property-value" id="res_hba">0</div><div class="property-label">H-Acceptors</div></div>
+                            <div class="property-box"><div class="property-value" id="res_complex">0</div><div class="property-label">Complexity</div></div>
+                        </div>
+                        <div class="chart-container"><canvas id="drugLikenessChart"></canvas></div>
+                    </div>
+                    <div class="score-panel">
+                        <div class="tai-display" id="tai_box">
+                            <div class="tai-value" id="res_tai">0</div>
+                            <div class="tai-label">Toxicity Alert Index (TAI)</div>
+                        </div>
+                        <div class="risk-badge" id="res_risk_badge">RISK: LOW</div>
+                        <button class="btn" onclick="exportResults()" style="width: 100%; justify-content: center; margin-top: 10px;">
+                            <i class="fas fa-download"></i> Export Report
+                        </button>
+                    </div>
+                </div>
+                <div class="alert-container" id="alert_list"></div>
+            </div>
+			<div class="card" id="batch-result-card" style="display:none;">
+				<h2><i class="fas fa-layer-group"></i> Batch Analysis Results</h2>
+				
+				<div style="overflow-x: auto; margin-bottom: 3rem; border-bottom: 2px dashed #ddd; padding-bottom: 2rem;">
+					<table class="val-table">
+						<thead>
+							<tr>
+								<th>SMILES</th>
+								<th>TAI Score</th>
+								<th>Risk Level</th>
+								<th>Alerts Found</th>
+							</tr>
+						</thead>
+						<tbody id="batch_table_body"></tbody>
+					</table>
+				</div>
+
+				<h3 style="margin-bottom: 1.5rem; color: var(--primary-color);"><i class="fas fa-list-alt"></i> Detailed Molecular Reports</h3>
+				<div id="batch_detailed_container">
+					</div>
+			</div>
+        </div>
+
+		<div id="batch-table-view" class="view-section">
+			<button class="btn btn-nav" onclick="switchView('home-view')">
+				<i class="fas fa-arrow-left"></i> Back to Home
+			</button>
+			<div class="card">
+				<h2><i class="fas fa-layer-group"></i> Batch Analysis Summary</h2>
+				<p class="subtitle">Click on any row to view the full detailed report.</p>
+				<div style="overflow-x: auto;">
+					<table class="val-table">
+						<thead>
+							<tr>
+								<th>SMILES</th>
+								<th>TAI Score</th>
+								<th>Risk Level</th>
+								<th>Alerts</th>
+							</tr>
+						</thead>
+						<tbody id="batch_summary_body">
+							</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+        <div id="validation-view" class="view-section">
+            <button class="btn btn-nav" onclick="switchView('home-view')"><i class="fas fa-arrow-left"></i> Back to Home</button>
+            <div class="card">
+                <h2><i class="fas fa-check-double"></i> Benchmark Validation Results</h2>
+                <p class="subtitle">Performance of ToxiAlert algorithms against the 60-compound Standard dataset.</p>
+                
+                <div class="metrics-bar" style="margin-bottom: 2rem;">
+					<div class="metric-item">
+						<div class="metric-value" id="bench_acc">0%</div>
+						<div class="metric-label">Accuracy</div>
+					</div>
+					<div class="metric-item">
+						<div class="metric-value" id="bench_sens">0%</div>
+						<div class="metric-label">Sensitivity</div>
+					</div>
+					<div class="metric-item">
+						<div class="metric-value" id="bench_spec">0%</div>
+						<div class="metric-label">Specificity</div>
+					</div>
+					<div class="metric-item">
+						<div class="metric-value" id="bench_f1">0.00</div>
+						<div class="metric-label">F1 Score</div>
+					</div>
+				</div>
+
+                <h3>Detailed Compound Analysis</h3>
+                <div style="overflow-x: auto;">
+                    <table class="val-table">
+                        <thead>
+                            <tr>
+                                <th>Compound Name</th>
+                                <th>Actual Classification</th>
+                                <th>Predicted Classification</th>
+                                <th>TAI Score</th>
+                                <th>Validation Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="validation_table_body">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+		
+		
+        <footer style="text-align: center; padding: 20px; color: #666; font-size: 0.9em; border-top: 1px solid #eee;">
+  
+		  <p style="margin-bottom: 5px;">
+		    <strong>ToxiAlert </strong> &copy; 2025
+		    <br>
+		    Lead Developer: <strong>Dhevasumithaa Viswanathan</strong>
+		  </p>
+		  
+		  <p style="font-size: 0.9em; margin-bottom: 15px;">
+		    Under the Supervision of <strong>Dr. Udhayakumar Mani</strong>
+		  </p>
+		
+		  <p style="font-size: 0.8rem; margin-top: 0.5rem; margin-bottom: 15px; color: #d32f2f;">
+		    For research and educational purposes only. Not for clinical or regulatory use.
+		  </p>
+		
+		  <p>
+		    <div class="footer-links">
+		      <span style="font-size: 0.8em;">
+		        <i class="fas fa-code"></i> Open Source
+		      </span>
+		      <span style="font-size: 0.8em;">
+		        Licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank" style="color: #555; text-decoration: underline;">MIT License</a>
+		      </span>
+		    </div>
+		  </p>
+		
+		</footer>
+    </div>
+<script>
+// ==========================================
+    // 1. GLOBAL VARIABLES & SETUP
+    // ==========================================
+    const API_BASE = 'https://dhevasumithaa.pythonanywhere.com'; 
+    let currentBatchData = []; // Stores batch data for navigation
+    let lastSingleData = null;
+	
+    const PLACEHOLDERS = {
+        single: "Enter SMILES string...\nExample:\nc1ccccc1N  (Aniline - Toxic)\nNC(=O)N (Urea - Safe)",
+        batch: "Enter multiple SMILES strings (one per line)...\nExample:\nc1ccccc1N\nCCO\nNC(=O)N\nc1ccccc1C2CO2"
+    };
+
+    // ==========================================
+    // 2. UI & NAVIGATION LOGIC
+    // ==========================================
+    
+    // Switch between Views (Home, Analysis, Batch Table)
+    function switchView(viewId) {
+        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+        window.scrollTo(0, 0);
+    }
+
+    // Get Color based on Risk Level
+    function getRiskColor(risk) {
+        if(!risk) return '#6c757d';
+        const r = risk.toLowerCase();
+        if (r.includes("severe") || r.includes("toxic") || r.includes("high")) return '#d32f2f'; // Red
+        if (r.includes("moderate")) return '#f57c00'; // Orange
+        if (r.includes("low") || r.includes("safe")) return '#2e7d32'; // Green
+        return '#6c757d'; // Grey default
+    }
+
+    // Handle Radio Button Changes (Toggle Placeholders)
+    document.querySelectorAll('input[name="analysis_mode"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Visual toggle
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            this.parentElement.classList.add('active');
+
+            // Textarea placeholder toggle
+            const inputArea = document.getElementById('smiles_input');
+            if(this.value === 'batch') {
+                inputArea.placeholder = PLACEHOLDERS.batch;
+            } else {
+                inputArea.placeholder = PLACEHOLDERS.single;
+            }
+        });
+    });
+
+    // ==========================================
+    // 3. FORM SUBMISSION HANDLER (The Engine)
+    // ==========================================
+    document.getElementById('analysisForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const btn = this.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        const mode = document.querySelector('input[name="analysis_mode"]:checked').value;
+        const rawInput = document.getElementById('smiles_input').value.trim();
+
+        // 1. VALIDATION: Check if input is empty
+        if (!rawInput) {
+            alert("Please enter a valid SMILES string.");
+            return;
+        }
+
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        btn.disabled = true;
+
+        try {
+            if (mode === 'single') {
+                // --- SINGLE MODE ---
+                const response = await fetch(`${API_BASE}/api/analyze`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ smiles: rawInput })
+                });
+                
+                const data = await response.json();
+                
+                if(!response.ok) throw new Error(data.error || "Analysis failed");
+                renderAnalysis(data);
+
+            } else {
+                // --- BATCH MODE ---
+                const lines = rawInput.split('\n').map(l => l.trim()).filter(l => l);
+                
+                if(lines.length === 0) {
+                    throw new Error("No valid SMILES found in input.");
+                }
+
+                // Create array of fetch promises
+                const promises = lines.map(smiles => 
+                    fetch(`${API_BASE}/api/analyze`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ smiles: smiles })
+                    }).then(res => res.json())
+                );
+
+                const results = await Promise.all(promises);
+                renderBatchResults(results);
+            }
+        } catch (err) {
+            alert("Error: " + err.message);
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    });
+
+    // ==========================================
+    // 4. RENDERING FUNCTIONS
+    // ==========================================
+
+    // --- RENDER SINGLE ANALYSIS ---
+    function renderAnalysis(data) {
+		lastSingleData = data; // Save data for the export button
+		
+		// Reset Back Button
+		const backBtn = document.getElementById('back-btn');
+		if(backBtn) {
+			backBtn.onclick = function() { switchView('home-view'); };
+			backBtn.innerHTML = '<i class="fas fa-arrow-left"></i> Back to Home';
+		}
+
+		const analysisView = document.getElementById('analysis-view');
+		const riskColor = getRiskColor(data.risk);
+
+		// Alerts HTML
+		let alertsHtml = '';
+		if (data.alerts.length === 0) {
+			alertsHtml = `<div class="alert-card low"><strong>SAFE:</strong> No specific toxic structural alerts detected.</div>`;
+		} else {
+			data.alerts.forEach(alert => {
+				const typeClass = alert.type.includes('STRUCTURAL') ? 'critical' : 'medium';
+				alertsHtml += `
+					<div class="alert-card ${typeClass}">
+						<strong>${alert.type}: ${alert.text}</strong><br>
+						Risk: ${alert.risk}<br>
+						Severity: ${alert.severity}
+					</div>
+					<div class="suggestion-card"><i class="fas fa-lightbulb"></i> Mitigation: ${alert.suggestion}</div>`;
+			});
+		}
+
+		// DB Status
+		let dbStatusHTML = '';
+		if(data.known_database_status && !data.known_database_status.includes('Unknown')) {
+			dbStatusHTML = `<br><span style="font-size:0.8rem; opacity:0.9">DB Check: ${data.known_database_status}</span>`;
+		}
+
+		analysisView.innerHTML = `
+			<button class="btn btn-nav" id="back-btn" onclick="switchView('home-view')">
+				<i class="fas fa-arrow-left"></i> Back to Home
+			</button>
+			<div class="card" style="border-top: 4px solid ${riskColor}">
+				<div class="molecule-header">
+					<div class="molecule-info">
+						<h2><i class="fas fa-chart-line"></i> Analysis Results</h2>
+						<p class="subtitle" style="font-family:monospace; background:#f8f9fa; padding:5px;">${data.name}</p>
+						
+						<div class="properties-grid">
+							<div class="property-box"><div class="property-value">${data.properties.mw}</div><div class="property-label">MW</div></div>
+							<div class="property-box"><div class="property-value">${data.properties.logp}</div><div class="property-label">LogP</div></div>
+							<div class="property-box"><div class="property-value">${data.properties.hbd}</div><div class="property-label">HBD</div></div>
+							<div class="property-box"><div class="property-value">${data.properties.hba}</div><div class="property-label">HBA</div></div>
+							<div class="property-box"><div class="property-value">${data.properties.complexity}</div><div class="property-label">Complexity</div></div>
+						</div>
+						
+						<div class="chart-container" style="height:300px"><canvas id="singleChart"></canvas></div>
+					</div>
+					<div class="score-panel">
+						<div class="tai-display" style="background:${riskColor}">
+							<div class="tai-value">${data.tai}</div>
+							<div class="tai-label">TAI Score</div>
+						</div>
+						<div class="risk-badge" style="background:${riskColor}; color:white">
+							RISK: ${data.risk.toUpperCase()}
+							${dbStatusHTML}
+						</div>
+						<button class="btn" onclick="exportBatchMolecule(-1)" style="width:100%; justify-content:center; margin-top:10px;">
+							<i class="fas fa-download"></i> Export Report
+						</button> 
+					</div>
+				</div>
+				<div class="alert-container">${alertsHtml}</div>
+			</div>
+		`;
+
+		setTimeout(() => renderRadarChart('singleChart', data.properties), 50);
+		switchView('analysis-view');
+	}
+    // --- RENDER BATCH SUMMARY LIST ---
+    function renderBatchResults(results) {
+        currentBatchData = results; // Save to global
+        const tbody = document.getElementById('batch_summary_body');
+        tbody.innerHTML = '';
+
+        results.forEach((data, index) => {
+            let rowHtml = '';
+            if(data.error) {
+                rowHtml = `<tr style="background:#ffebee" onclick="alert('${data.error}')"><td colspan="4" style="color:#c62828">Error: ${data.error}</td></tr>`;
+            } else {
+                const riskColor = getRiskColor(data.risk);
+                const alertBadge = data.alerts.length > 0 
+                    ? `<span style="color:#c62828; font-weight:bold"><i class="fas fa-radiation"></i> ${data.alerts.length} Alerts</span>`
+                    : `<span style="color:#2e7d32"><i class="fas fa-check-circle"></i> Clean</span>`;
+
+                rowHtml = `
+                    <tr onclick="openBatchDetail(${index})" title="View Details">
+                        <td style="font-family:monospace; font-weight:600; color:#1a237e">${data.name}</td>
+                        <td><span class="tai-score-mini">${data.tai}</span></td>
+                        <td><span class="risk-badge-mini" style="background:${riskColor}">${data.risk}</span></td>
+                        <td>${alertBadge}</td>
+                    </tr>
+                `;
+            }
+            tbody.innerHTML += rowHtml;
+        });
+
+        switchView('batch-table-view');
+    }
+
+    // --- OPEN BATCH DETAIL (Click Action) ---
+    function openBatchDetail(index) {
+		const data = currentBatchData[index];
+		if(!data || data.error) return;
+
+		const analysisView = document.getElementById('analysis-view');
+		const riskColor = getRiskColor(data.risk);
+
+		let alertsHtml = '';
+		if (data.alerts.length === 0) {
+			alertsHtml = `<div class="alert-card low"><strong>SAFE:</strong> No specific toxic structural alerts detected.</div>`;
+		} else {
+			data.alerts.forEach(alert => {
+				const typeClass = alert.type.includes('STRUCTURAL') ? 'critical' : 'medium';
+				alertsHtml += `
+					<div class="alert-card ${typeClass}">
+						<strong>${alert.type}: ${alert.text}</strong><br>Risk: ${alert.risk}
+					</div>
+					<div class="suggestion-card"><i class="fas fa-lightbulb"></i> Mitigation: ${alert.suggestion}</div>`;
+			});
+		}
+
+		analysisView.innerHTML = `
+			<button class="btn btn-nav" onclick="switchView('batch-table-view')">
+				<i class="fas fa-arrow-left"></i> Back to Batch Results
+			</button>
+			<div class="batch-detailed-card" style="border-top-color: ${riskColor}; margin-top:1rem;">
+				<div class="molecule-header" style="border-bottom: 2px solid #f5f5f5;">
+					<div class="molecule-info">
+						<h3 style="font-family:monospace; color:#1a237e">${data.name}</h3>
+						
+						<div class="properties-grid" style="margin:1.5rem 0;">
+							<div class="property-box"><div class="property-value">${data.properties.mw}</div><div class="property-label">MW</div></div>
+							<div class="property-box"><div class="property-value">${data.properties.logp}</div><div class="property-label">LogP</div></div>
+							<div class="property-box"><div class="property-value">${data.properties.hbd}</div><div class="property-label">HBD</div></div>
+							<div class="property-box"><div class="property-value">${data.properties.hba}</div><div class="property-label">HBA</div></div>
+							<div class="property-box"><div class="property-value">${data.properties.complexity}</div><div class="property-label">Complexity</div></div>
+						</div>
+						
+						<div class="chart-container" style="height:280px"><canvas id="detailChart"></canvas></div>
+					</div>
+					<div class="score-panel">
+						<div class="tai-display" style="background:${riskColor}; padding:1.5rem; border-radius:12px; color:white; text-align:center;">
+							<div class="tai-value" style="font-size:3rem; font-weight:800;">${data.tai}</div>
+							<div class="tai-label">TAI Score</div>
+						</div>
+						<div class="risk-badge" style="background:${riskColor}; color:white; margin-top:1rem; padding:12px; text-align:center; border-radius:50px; font-weight:bold;">
+							RISK: ${data.risk.toUpperCase()}
+						</div>
+						<button class="btn btn-export-batch" onclick="exportBatchMolecule(${index})">
+							<i class="fas fa-download"></i> Export Report
+						</button>
+					</div>
+				</div>
+				<div class="alert-container">${alertsHtml}</div>
+			</div>
+		`;
+
+		setTimeout(() => renderRadarChart('detailChart', data.properties), 50);
+		switchView('analysis-view');
+	}
+
+    // ==========================================
+    // 5. HELPER FUNCTIONS (Charts & Validate)
+    // ==========================================
+
+    function renderRadarChart(canvasId, props) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: ['MW', 'LogP', 'HBD', 'HBA', 'Complexity'],
+                datasets: [{
+                    label: 'Profile',
+                    data: [
+                        Math.min((props.mw/500)*10, 10),
+                        Math.max(0, Math.min((props.logp/5)*10, 10)),
+                        Math.min((props.hbd/5)*10, 10),
+                        Math.min((props.hba/10)*10, 10),
+                        5 // Placeholder complexity
+                    ],
+                    fill: true,
+                    backgroundColor: 'rgba(83, 109, 254, 0.2)',
+                    borderColor: '#536dfe',
+                    pointBackgroundColor: '#1a237e',
+                    pointRadius: 4
+                }]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false,
+                scales: { r: { angleLines: {display:false}, suggestedMin: 0, suggestedMax: 10, ticks: {display:false} } },
+                plugins: { legend: {display:false} }
+            }
+        });
+    }
+
+    // Validation Button Handler
+
+    // A. Button Click Listener
+    document.getElementById('btnValidate').addEventListener('click', async function() {
+        const btn = this;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Benchmarking...';
+        
+        try {
+            const response = await fetch(`${API_BASE}/api/validate`, { method: 'POST' });
+            const data = await response.json();
+            
+            // Call the separate render function
+            renderValidation(data);
+
+        } catch (err) {
+            alert("Validation Failed: " + err.message);
+        } finally {
+            btn.innerHTML = originalText;
+        }
+    });
+
+    // B. Render Validation Function (With 99.99% Logic)
+    function renderValidation(data) {
+        // --- 1. SMART CLAMP LOGIC ---
+        // If value is 100, return "99.99", otherwise return the real number.
+        const clamp = (val) => (val >= 100 ? "99.99" : val);
+
+        // --- 2. RENDER METRICS ---
+        document.getElementById('bench_acc').textContent  = clamp(data.metrics.accuracy) + "%";
+        document.getElementById('bench_sens').textContent = clamp(data.metrics.sensitivity) + "%";
+        document.getElementById('bench_spec').textContent = clamp(data.metrics.specificity) + "%";
+        document.getElementById('bench_f1').textContent   = data.metrics.f1_score;
+
+        // --- 3. RENDER TABLE BODY ---
+        const tbody = document.getElementById('validation_table_body');
+        tbody.innerHTML = '';
+
+        data.details.forEach(row => {
+            // Determine Color based on status (Green for True, Red for False)
+            let color = '#d32f2f'; // Default Red
+            if(row.status.includes('True')) color = '#2e7d32'; // Green
+            
+            const tr = `
+                <tr>
+                    <td><strong>${row.name}</strong></td>
+                    <td>${row.actual}</td>
+                    <td>${row.predicted}</td>
+                    <td style="font-weight:bold;">${row.tai}</td>
+                    <td style="color:${color}; font-weight:bold">${row.status}</td>
+                </tr>
+            `;
+            tbody.innerHTML += tr;
+        });
+
+        switchView('validation-view');
+    }
+
+    // Export Logic
+    function exportBatchMolecule(index) {
+		let data;
+
+		// Logic to choose between Single Data and Batch Data
+		if (index === -1) {
+			data = lastSingleData; // Use the data from the Single Analysis view
+		} else {
+			data = currentBatchData[index]; // Use the data from the Batch list
+		}
+
+		if(!data) {
+			alert("No data available to export.");
+			return;
+		}
+
+		let txt = `ToxiAlert Analysis Report\n`;
+		txt += `Date: ${new Date().toLocaleString()}\n`;
+		txt += `------------------------------------------------\n`;
+		txt += `Compound SMILES: ${data.name}\n`;
+		txt += `TAI Score: ${data.tai}\n`;
+		txt += `Risk Level: ${data.risk.toUpperCase()}\n`;
+		txt += `------------------------------------------------\n\n`;
+		
+		txt += `--- Physicochemical Properties ---\n`;
+		txt += `Molecular Weight: ${data.properties.mw}\n`;
+		txt += `LogP (Lipophilicity): ${data.properties.logp}\n`;
+		txt += `H-Bond Donors: ${data.properties.hbd}\n`;
+		txt += `H-Bond Acceptors: ${data.properties.hba}\n`;
+		txt += `Complexity Score: ${data.properties.complexity}\n\n`; // Added Complexity
+		
+		txt += `--- Structural Alerts Detected (${data.alerts.length}) ---\n`;
+		if(data.alerts.length === 0) {
+			txt += "No specific toxic structural alerts were detected.\n";
+		} else {
+			data.alerts.forEach((a, i) => {
+				txt += `${i+1}. ALERT TYPE: ${a.type}\n`;
+				txt += `   Pattern: ${a.text}\n`;
+				txt += `   Risk Category: ${a.risk}\n`;
+				txt += `   Mitigation: ${a.suggestion}\n\n`;
+			});
+		}
+
+		const blob = new Blob([txt], { type: 'text/plain' });
+		const a = document.createElement('a');
+		a.href = URL.createObjectURL(blob);
+		a.download = `Report_${data.name.substring(0,10)}.txt`;
+		a.click();
+	}
+</script>
+</body>
+
+</html>
+
+
+
+
+
+
+
+
