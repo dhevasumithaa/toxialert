@@ -19,6 +19,14 @@ Use ToxiAlert to rapidly screen compound libraries, filter out high-risk candida
 
 ---
 
+## 🛠️ Technologies Used
+* **Backend:** Python, RDKit, Flask (API)
+* **Frontend:** HTML5, CSS3, JavaScript (ES6+)
+* **Visualization:** Chart.js
+* **Data Transport:** JSON / REST API
+
+---
+
 #### ToxiAlert computational workflow
 ```txt
             ┌────────────┐
