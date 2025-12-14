@@ -3,7 +3,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> **Status:** Active | **Version:** 1.0 | **License:** MIT
+> **Status:** Active | **License:** MIT
 
 ---
 ## 🔗 Quick Links
