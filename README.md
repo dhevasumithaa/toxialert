@@ -13,9 +13,9 @@
 ---
 
 ## 📖 About
-**ToxiAlert** is a high-speed, computational toxicology tool designed for chemists, biologists, and computational researchers. It provides an immediate, quantitative assessment of a molecule's risk profile by combining structural pattern recognition with physicochemical property analysis.
+**ToxiAlert** is a knowledge-based computational toxicology screening tool designed for chemists, biologists, and computational researchers. It provides a rapid, quantitative assessment of a molecule's risk profile by combining SMARTS-based toxicological structural-alert detection with a custom Toxicity Activity Index (TAI) derived from structural alerts and physicochemical risk factors.
 
-Use ToxiAlert to rapidly screen compound libraries, filter out high-risk candidates, and focus your research on safer, more viable molecules.
+Use ToxiAlert to rapidly screen compound libraries, identify potential toxicological liabilities, and prioritize safer, more viable molecules for further investigation.
 
 ---
 
@@ -97,9 +97,9 @@ Use ToxiAlert to rapidly screen compound libraries, filter out high-risk candida
 
 ### 1. Advanced Toxicity Scoring (TAI)
 
-ToxiAlert computes a decisive **Toxicity Activity Index (TAI)** from **0–100**, providing a single, holistic toxicity assessment for any compound.
+ToxiAlert computes a **Toxicity Activity Index (TAI)** from **0–100**, providing a quantitative toxicity risk-ranking score for any compound.
 
-* **Hybrid Evaluation Logic:** The score combines SMARTS-based Structural Alert detection with Physicochemical penalties (e.g., high LogP, suboptimal MW) for quantitative risk scoring.
+* **Hybrid Evaluation Logic:** The score combines SMARTS-based structural alert detection with physicochemical penalties (e.g., high LogP, suboptimal MW) for quantitative risk scoring.
 * **Five-Level Risk Classification:**
     * **0–20:** Safe/Benign
     * **21–40:** Low Risk
@@ -107,13 +107,15 @@ ToxiAlert computes a decisive **Toxicity Activity Index (TAI)** from **0–100**
     * **61–80:** High Risk
     * **81–100:** Severe/Toxic
 
-### 2. High-Precision Toxicophore Detection
+> **Important Note:** The Toxicity Activity Index (TAI) is a knowledge-based risk-ranking metric derived from structural alerts and physicochemical properties. It is intended for preliminary screening and should not be interpreted as a direct measure of real-world toxicity.
 
-Identifies and visualizes high-risk chemical substructures, offering actionable structural mitigation insights.
+### 2. SMARTS-Based Toxicophore Detection
 
-* **Alert Library:** Scans for **18 validated toxicophores** (e.g., Nitro groups, Epoxides, Hydrazines, Quinones, etc.).
+Identifies and visualizes potentially high-risk chemical substructures, providing actionable structural risk insights.
+
+* **Alert Library:** Scans for **18 SMARTS-based toxicological structural alerts** (e.g., Nitro groups, Epoxides, Hydrazines, Quinones, etc.).
 * **Contextual Risk Insights:** Shows the biological relevance of each alert—e.g., Genotoxicity, hERG risk, Skin Sensitization—and suggests structural mitigation strategies.
-* **Visual Highlighting:** Toxic core fragments are highlighted in **red** on the rendered molecular structure for immediate recognition. 
+* **Visual Highlighting:** Toxic core fragments are highlighted in **red** on the rendered molecular structure for immediate recognition.
 
 ### 3. Comprehensive Physicochemical Profiling
 
@@ -131,21 +133,21 @@ Powered by RDKit, ToxiAlert automatically computes essential drug-likeness descr
 
 Analyze entire libraries of SMILES strings with ease, enabling high-throughput screening.
 
-* **Batch Input Support:** Paste multiple **SMILES** (one per line) for instant parallel analysis.
-* **Asynchronous Processing:** Background concurrent operations ensure a smooth and responsive User Interface (UI)—even for large datasets.
+* **Batch Input Support:** Paste multiple **SMILES** (one per line) for rapid automated analysis.
+* **Efficient Processing:** Optimized workflows ensure a smooth and responsive user experience, even for larger datasets.
 * **Expandable Summary Dashboard:** Displays batch results in an interactive table with **click-to-expand** detailed molecular reports.
 
 ### 5. Robust Benchmarking & Validation
 
-Built-in evaluation tools provide transparency and scientific reliability in the model's performance.
+Built-in evaluation tools provide transparency and benchmarking of the knowledge-based screening system.
 
-* **Validation Suite:** Runs against a curated **60-compound Ground Truth dataset** (30 safe, 30 toxic).
+* **Validation Suite:** Runs against a curated **60-compound benchmark dataset** (30 safe, 30 toxic).
 * **Real-Time Performance Metrics:** Displays live calculations for:
     * Accuracy
     * Sensitivity (Recall)
     * Specificity
     * F1 Score
-* **Proven Performance:** Achieves **>90% Accuracy**, **>85% Sensitivity**, **>95% Specificity**, with an **F1 Score = 0.91**.
+* **Benchmark Performance:**Performance metrics are calculated in real time using the included benchmark dataset. On the benchmark dataset, ToxiAlert achieved **>90% Accuracy**, **>85% Sensitivity**, **>95% Specificity**, and an **F1 Score of 0.91**.
 
 ### 6. Professional Reporting & Visualization
 
@@ -165,7 +167,7 @@ ToxiAlert is built on a scalable, modular, and modern stack, ensuring high perfo
 | **Backend** | **REST-Based Modular JSON Endpoints** | Supports external connectivity, including ELNs and third-party tools. Allows for easy integration. |
 | **Frontend** | **Single Page Application (SPA)** | Fast and responsive UI. Ensures seamless switching between Analysis, Batch, and Validation modules without page reloads. |
 | **Core Engine** | **RDKit, SMARTS Matching** | Industry-standard, robust cheminformatics libraries for high-precision calculations. |
-| **Processing** | **Asynchronous/Concurrent Operations** | Guarantees a smooth user experience even when processing large, complex datasets in batch mode. |
+| **Processing** | **Automated Batch Analysis** | Supports rapid evaluation of multiple compounds within a unified workflow. |
 
 ---
 
@@ -175,7 +177,7 @@ To get started with ToxiAlert, simply navigate to the main application interface
 
 1.  **Paste** a single SMILES string for detailed individual analysis.
 2.  **Paste** multiple SMILES strings (one per line) into the **Batch** tab for high-throughput screening.
-3.  **Review** the performance metrics in the **Validation** tab for scientific assurance.
+3. **Review** the performance metrics in the **Validation** tab for benchmarking and transparency.
 
 ---
 
@@ -223,6 +225,16 @@ Complexity Score: 48
    Risk Category: Carcinogenicity
    Mitigation: DNA intercalation and adduct formation.
 ```
+---
+
+## ⚠️ Limitations
+
+ToxiAlert is a knowledge-based computational toxicology screening tool and should not be interpreted as a definitive predictor of toxicity, carcinogenicity, or clinical safety.
+
+The Toxicity Activity Index (TAI) is a custom risk-ranking metric derived from SMARTS-based structural alerts and physicochemical properties. Actual toxicological outcomes depend on additional factors such as metabolism, dose, exposure route, bioavailability, and species-specific responses.
+
+ToxiAlert is intended for early-stage screening, education, and preliminary risk assessment. Experimental validation and regulatory toxicology testing remain essential before practical application.
+
 ---
 
 ## 👥 Authors
