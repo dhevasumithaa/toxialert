@@ -681,6 +681,30 @@
         const rawInput = document.getElementById('smiles_input').value.trim();
 
         // 1. VALIDATION: Check if input is empty
+    	const lines = rawInput
+        	.split('\n')
+        	.map(line => line.trim())
+        	.filter(line => line);
+
+    	if (mode === 'single' && lines.length > 1) {
+        	const switchMode = confirm(
+            	"Multiple SMILES strings detected.\n\n" +
+            	"Single Molecule Analysis accepts only one compound.\n\n" +
+            	"Press OK to switch to Batch Analysis.\n" +
+            	"Press Cancel to stay in Single Molecule mode."
+        	);
+
+        	if (switchMode) {
+            	const batchRadio = document.querySelector('input[value="batch"]');
+            	batchRadio.checked = true;
+            	document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            	batchRadio.parentElement.classList.add('active');
+            	document.getElementById('smiles_input').placeholder = PLACEHOLDERS.batch;
+        	}
+
+        	return;
+    	}
+
         if (!rawInput) {
             alert("Please enter a valid SMILES string.");
             return;
