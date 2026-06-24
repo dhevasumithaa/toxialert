@@ -1,7 +1,7 @@
 	// ==========================================
     // 1. GLOBAL VARIABLES & SETUP
     // ==========================================
-    const API_BASE = ' https://toxialert.onrender.com '; 
+    const API_BASE = 'https://toxialert.onrender.com'; 
     let currentBatchData = []; // Stores batch data for navigation
     let lastSingleData = null;
 	
