@@ -814,6 +814,10 @@
 		switchView('analysis-view');
 	}
     // --- RENDER BATCH SUMMARY LIST ---
+	function numberToWord(num) {
+    	const words = ["Zero", "One", "Two", "Three", "Four","Five", "Six", "Seven", "Eight", "Nine", "Ten"];
+		return words[num] || num.toString();
+	}
     function renderBatchResults(results) {
         currentBatchData = results; // Save to global
         const tbody = document.getElementById('batch_summary_body');
@@ -825,8 +829,14 @@
                 rowHtml = `<tr style="background:#ffebee" onclick="alert('${data.error}')"><td colspan="4" style="color:#c62828">Error: ${data.error}</td></tr>`;
             } else {
                 const riskColor = getRiskColor(data.risk);
+
+				const count = data.alerts.length;
+				
+				const alertText =data.alerts.length === 1
+        			? "1 Alert"
+        			: `${data.alerts.length} Alerts`;
                 const alertBadge = data.alerts.length > 0 
-                    ? `<span style="color:#c62828; font-weight:bold"><i class="fas fa-radiation"></i> ${data.alerts.length} Alerts</span>`
+                    ? `<span style="color:#c62828; font-weight:bold"><i class="fas fa-radiation"></i> ${alertText} Alerts</span>`
                     : `<span style="color:#2e7d32"><i class="fas fa-check-circle"></i> Clean</span>`;
 
                 rowHtml = `
@@ -1029,7 +1039,11 @@
 		txt += `H-Bond Acceptors: ${data.properties.hba}\n`;
 		txt += `Complexity Score: ${data.properties.complexity}\n\n`; // Added Complexity
 		
-		txt += `--- Structural Alerts Detected (${data.alerts.length}) ---\n`;
+		const alertLabel = data.alerts.length === 1
+        	? `${numberToWord(data.alerts.length)} Structural Alert`
+        	: `${numberToWord(data.alerts.length)} Structural Alerts`;
+
+		txt += `--- ${alertLabel} Detected ---\n`;
 		if(data.alerts.length === 0) {
 			txt += "No specific toxic structural alerts were detected.\n";
 		} else {
