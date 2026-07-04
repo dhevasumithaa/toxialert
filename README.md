@@ -21,7 +21,7 @@ Use ToxiAlert to rapidly screen compound libraries, identify potential toxicolog
 
 ## 🛠️ Technologies Used
 * **Backend:** Python, RDKit, Flask (API)
-* **Frontend:** HTML5, CSS3, JavaScript (ES6+)
+* **Frontend:** HTML, CSS, JavaScript
 * **Visualization:** Chart.js
 * **Data Transport:** JSON / REST API
 
